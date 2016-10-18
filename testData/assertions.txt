@@ -1,0 +1,7 @@
+apache_config['*:443']['/opt/public']['Require']['all granted'] == true
+
+apache_config['*:443']['/opt/public']['Require'] includes 'all granted'
+
+
+
+configuration::vhost['*.443']::
