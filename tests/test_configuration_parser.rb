@@ -8,13 +8,36 @@ class ParserTests < Test::Unit::TestCase
   # to set up fixture information.
   def setup
     # Do nothing
-    @native_apache_config = <<-APACHE_CONFIG_NATIVE
+  end
+
+  def teardown
+    # Do nothing
+  end
+
+  # Basic Wrapped Entry Line
+  def test_wrapped_line_parse
+
+    multiple_line_config  = <<-APACHE_CONFIG
+Include /Users/david/Sites\\
+/very-long-path
+    APACHE_CONFIG
+
+    result = ApacheConfigParser.parse(multiple_line_config)
+
+    assert_not_nil result
+
+  end
+
+  # Parse Complete Config File
+  def test_complete_parse
+
+    complete_apache_config = <<-APACHE_CONFIG
 #
 # This is the main Apache HTTP server configuration file.  It contains the
 # configuration directives that give the server its instructions.
-# See <URL:http://httpd.apache.org/docs/2.2> for detailed information.
+# See <URL:http://httpd.apache.org/docs/2.4/> for detailed information.
 # In particular, see
-# <URL:http://httpd.apache.org/docs/2.2/mod/directives.html>
+# <URL:http://httpd.apache.org/docs/2.4/mod/directives.html>
 # for a discussion of each configuration directive.
 #
 # Do NOT simply read the instructions in here without understanding
@@ -24,21 +47,32 @@ class ParserTests < Test::Unit::TestCase
 # Configuration and logfile names: If the filenames you specify for many
 # of the server's control files begin with "/" (or "drive:/" for Win32), the
 # server will use that explicit path.  If the filenames do *not* begin
-# with "/", the value of ServerRoot is prepended -- so 'log/access_log'
-# with ServerRoot set to '/www' will be interpreted by the
-# server as '/www/log/access_log', where as '/log/access_log' will be
-# interpreted as '/log/access_log'.
+# with "/", the value of ServerRoot is prepended -- so "logs/access_log"
+# with ServerRoot set to "/usr/local/apache2" will be interpreted by the
+# server as "/usr/local/apache2/logs/access_log", whereas "/logs/access_log"
+# will be interpreted as '/logs/access_log'.
 
 #
 # ServerRoot: The top of the directory tree under which the server's
 # configuration, error, and log files are kept.
 #
 # Do not add a slash at the end of the directory path.  If you point
-# ServerRoot at a non-local disk, be sure to point the LockFile directive
-# at a local disk.  If you wish to share the same ServerRoot for multiple
-# httpd daemons, you will need to change at least LockFile and PidFile.
+# ServerRoot at a non-local disk, be sure to specify a local disk on the
+# Mutex directive, if file-based mutexes are used.  If you wish to share the
+# same ServerRoot for multiple httpd daemons, you will need to change at
+# least PidFile.
 #
-ServerRoot "/usr/local/opt/httpd22"
+ServerRoot "/usr"
+
+#
+# Mutex: Allows you to set the mutex mechanism and mutex file directory
+# for individual mutexes, or change the global defaults
+#
+# Uncomment and change the directory if mutexes are file-based and the default
+# mutex file directory is not on a local disk or is not appropriate for some
+# other reason.
+#
+Mutex default:/private/var/run
 
 #
 # Listen: Allows you to bind Apache to specific IP addresses and/or
@@ -49,7 +83,7 @@ ServerRoot "/usr/local/opt/httpd22"
 # prevent Apache from glomming onto all bound IP addresses.
 #
 Listen 12.34.56.78:80
-#Listen 8080
+#Listen 80
 
 #
 # Dynamic Shared Object (DSO) Support
@@ -63,71 +97,113 @@ Listen 12.34.56.78:80
 # Example:
 # LoadModule foo_module modules/mod_foo.so
 #
-LoadModule authn_file_module libexec/mod_authn_file.so
-LoadModule authn_dbm_module libexec/mod_authn_dbm.so
-LoadModule authn_anon_module libexec/mod_authn_anon.so
-LoadModule authn_dbd_module libexec/mod_authn_dbd.so
-LoadModule authn_default_module libexec/mod_authn_default.so
-LoadModule authz_host_module libexec/mod_authz_host.so
-LoadModule authz_groupfile_module libexec/mod_authz_groupfile.so
-LoadModule authz_user_module libexec/mod_authz_user.so
-LoadModule authz_dbm_module libexec/mod_authz_dbm.so
-LoadModule authz_owner_module libexec/mod_authz_owner.so
-LoadModule authz_default_module libexec/mod_authz_default.so
-LoadModule auth_basic_module libexec/mod_auth_basic.so
-LoadModule auth_digest_module libexec/mod_auth_digest.so
-LoadModule cache_module libexec/mod_cache.so
-LoadModule dbd_module libexec/mod_dbd.so
-LoadModule dumpio_module libexec/mod_dumpio.so
-LoadModule reqtimeout_module libexec/mod_reqtimeout.so
-LoadModule ext_filter_module libexec/mod_ext_filter.so
-LoadModule include_module libexec/mod_include.so
-LoadModule filter_module libexec/mod_filter.so
-LoadModule substitute_module libexec/mod_substitute.so
-LoadModule deflate_module libexec/mod_deflate.so
-LoadModule log_config_module libexec/mod_log_config.so
-LoadModule log_forensic_module libexec/mod_log_forensic.so
-LoadModule logio_module libexec/mod_logio.so
-LoadModule env_module libexec/mod_env.so
-LoadModule mime_magic_module libexec/mod_mime_magic.so
-LoadModule cern_meta_module libexec/mod_cern_meta.so
-LoadModule expires_module libexec/mod_expires.so
-LoadModule headers_module libexec/mod_headers.so
-LoadModule ident_module libexec/mod_ident.so
-LoadModule usertrack_module libexec/mod_usertrack.so
-LoadModule unique_id_module libexec/mod_unique_id.so
-LoadModule setenvif_module libexec/mod_setenvif.so
-LoadModule version_module libexec/mod_version.so
-LoadModule proxy_module libexec/mod_proxy.so
-LoadModule proxy_connect_module libexec/mod_proxy_connect.so
-LoadModule proxy_ftp_module libexec/mod_proxy_ftp.so
-LoadModule proxy_http_module libexec/mod_proxy_http.so
-LoadModule proxy_scgi_module libexec/mod_proxy_scgi.so
-LoadModule proxy_ajp_module libexec/mod_proxy_ajp.so
-LoadModule proxy_balancer_module libexec/mod_proxy_balancer.so
-LoadModule ssl_module libexec/mod_ssl.so
-LoadModule mime_module libexec/mod_mime.so
-LoadModule dav_module libexec/mod_dav.so
-LoadModule status_module libexec/mod_status.so
-LoadModule autoindex_module libexec/mod_autoindex.so
-LoadModule asis_module libexec/mod_asis.so
-LoadModule info_module libexec/mod_info.so
-LoadModule suexec_module libexec/mod_suexec.so
-LoadModule cgid_module libexec/mod_cgid.so
-LoadModule cgi_module libexec/mod_cgi.so
-LoadModule dav_fs_module libexec/mod_dav_fs.so
-LoadModule vhost_alias_module libexec/mod_vhost_alias.so
-LoadModule negotiation_module libexec/mod_negotiation.so
-LoadModule dir_module libexec/mod_dir.so
-LoadModule imagemap_module libexec/mod_imagemap.so
-LoadModule actions_module libexec/mod_actions.so
-LoadModule speling_module libexec/mod_speling.so
-LoadModule userdir_module libexec/mod_userdir.so
-LoadModule alias_module libexec/mod_alias.so
-LoadModule rewrite_module libexec/mod_rewrite.so
+LoadModule authn_file_module libexec/apache2/mod_authn_file.so
+LoadModule authn_dbm_module libexec/apache2/mod_authn_dbm.so
+LoadModule authn_anon_module libexec/apache2/mod_authn_anon.so
+LoadModule authn_dbd_module libexec/apache2/mod_authn_dbd.so
+LoadModule authn_socache_module libexec/apache2/mod_authn_socache.so
+LoadModule authn_core_module libexec/apache2/mod_authn_core.so
+LoadModule authz_host_module libexec/apache2/mod_authz_host.so
+LoadModule authz_groupfile_module libexec/apache2/mod_authz_groupfile.so
+LoadModule authz_user_module libexec/apache2/mod_authz_user.so
+LoadModule authz_dbm_module libexec/apache2/mod_authz_dbm.so
+LoadModule authz_owner_module libexec/apache2/mod_authz_owner.so
+LoadModule authz_dbd_module libexec/apache2/mod_authz_dbd.so
+LoadModule authz_core_module libexec/apache2/mod_authz_core.so
+LoadModule authnz_ldap_module libexec/apache2/mod_authnz_ldap.so
+LoadModule access_compat_module libexec/apache2/mod_access_compat.so
+LoadModule auth_basic_module libexec/apache2/mod_auth_basic.so
+LoadModule auth_form_module libexec/apache2/mod_auth_form.so
+LoadModule auth_digest_module libexec/apache2/mod_auth_digest.so
+LoadModule allowmethods_module libexec/apache2/mod_allowmethods.so
+LoadModule file_cache_module libexec/apache2/mod_file_cache.so
+LoadModule cache_module libexec/apache2/mod_cache.so
+LoadModule cache_disk_module libexec/apache2/mod_cache_disk.so
+LoadModule cache_socache_module libexec/apache2/mod_cache_socache.so
+LoadModule socache_shmcb_module libexec/apache2/mod_socache_shmcb.so
+LoadModule socache_dbm_module libexec/apache2/mod_socache_dbm.so
+LoadModule socache_memcache_module libexec/apache2/mod_socache_memcache.so
+LoadModule watchdog_module libexec/apache2/mod_watchdog.so
+LoadModule macro_module libexec/apache2/mod_macro.so
+LoadModule dbd_module libexec/apache2/mod_dbd.so
+LoadModule dumpio_module libexec/apache2/mod_dumpio.so
+LoadModule echo_module libexec/apache2/mod_echo.so
+LoadModule buffer_module libexec/apache2/mod_buffer.so
+LoadModule data_module libexec/apache2/mod_data.so
+LoadModule ratelimit_module libexec/apache2/mod_ratelimit.so
+LoadModule reqtimeout_module libexec/apache2/mod_reqtimeout.so
+LoadModule ext_filter_module libexec/apache2/mod_ext_filter.so
+LoadModule request_module libexec/apache2/mod_request.so
+LoadModule include_module libexec/apache2/mod_include.so
+LoadModule filter_module libexec/apache2/mod_filter.so
+LoadModule reflector_module libexec/apache2/mod_reflector.so
+LoadModule substitute_module libexec/apache2/mod_substitute.so
+LoadModule sed_module libexec/apache2/mod_sed.so
+LoadModule charset_lite_module libexec/apache2/mod_charset_lite.so
+LoadModule deflate_module libexec/apache2/mod_deflate.so
+LoadModule xml2enc_module libexec/apache2/mod_xml2enc.so
+LoadModule proxy_html_module libexec/apache2/mod_proxy_html.so
+LoadModule mime_module libexec/apache2/mod_mime.so
+LoadModule ldap_module libexec/apache2/mod_ldap.so
+LoadModule log_config_module libexec/apache2/mod_log_config.so
+LoadModule log_debug_module libexec/apache2/mod_log_debug.so
+LoadModule log_forensic_module libexec/apache2/mod_log_forensic.so
+LoadModule logio_module libexec/apache2/mod_logio.so
+LoadModule env_module libexec/apache2/mod_env.so
+LoadModule mime_magic_module libexec/apache2/mod_mime_magic.so
+LoadModule expires_module libexec/apache2/mod_expires.so
+LoadModule headers_module libexec/apache2/mod_headers.so
+LoadModule usertrack_module libexec/apache2/mod_usertrack.so
+LoadModule unique_id_module libexec/apache2/mod_unique_id.so
+LoadModule setenvif_module libexec/apache2/mod_setenvif.so
+LoadModule version_module libexec/apache2/mod_version.so
+LoadModule remoteip_module libexec/apache2/mod_remoteip.so
+LoadModule proxy_module libexec/apache2/mod_proxy.so
+LoadModule proxy_connect_module libexec/apache2/mod_proxy_connect.so
+LoadModule proxy_ftp_module libexec/apache2/mod_proxy_ftp.so
+LoadModule proxy_http_module libexec/apache2/mod_proxy_http.so
+LoadModule proxy_fcgi_module libexec/apache2/mod_proxy_fcgi.so
+LoadModule proxy_scgi_module libexec/apache2/mod_proxy_scgi.so
+LoadModule proxy_fdpass_module libexec/apache2/mod_proxy_fdpass.so
+LoadModule proxy_wstunnel_module libexec/apache2/mod_proxy_wstunnel.so
+LoadModule proxy_ajp_module libexec/apache2/mod_proxy_ajp.so
+LoadModule proxy_balancer_module libexec/apache2/mod_proxy_balancer.so
+LoadModule proxy_express_module libexec/apache2/mod_proxy_express.so
+LoadModule session_module libexec/apache2/mod_session.so
+LoadModule session_cookie_module libexec/apache2/mod_session_cookie.so
+LoadModule session_dbd_module libexec/apache2/mod_session_dbd.so
+LoadModule slotmem_shm_module libexec/apache2/mod_slotmem_shm.so
+LoadModule slotmem_plain_module libexec/apache2/mod_slotmem_plain.so
+LoadModule ssl_module libexec/apache2/mod_ssl.so
+LoadModule dialup_module libexec/apache2/mod_dialup.so
+LoadModule lbmethod_byrequests_module libexec/apache2/mod_lbmethod_byrequests.so
+LoadModule lbmethod_bytraffic_module libexec/apache2/mod_lbmethod_bytraffic.so
+LoadModule lbmethod_bybusyness_module libexec/apache2/mod_lbmethod_bybusyness.so
+LoadModule lbmethod_heartbeat_module libexec/apache2/mod_lbmethod_heartbeat.so
+LoadModule unixd_module libexec/apache2/mod_unixd.so
+LoadModule heartbeat_module libexec/apache2/mod_heartbeat.so
+LoadModule heartmonitor_module libexec/apache2/mod_heartmonitor.so
+LoadModule dav_module libexec/apache2/mod_dav.so
+LoadModule status_module libexec/apache2/mod_status.so
+LoadModule autoindex_module libexec/apache2/mod_autoindex.so
+LoadModule asis_module libexec/apache2/mod_asis.so
+LoadModule info_module libexec/apache2/mod_info.so
+LoadModule cgi_module libexec/apache2/mod_cgi.so
+LoadModule dav_fs_module libexec/apache2/mod_dav_fs.so
+LoadModule dav_lock_module libexec/apache2/mod_dav_lock.so
+LoadModule vhost_alias_module libexec/apache2/mod_vhost_alias.so
+LoadModule negotiation_module libexec/apache2/mod_negotiation.so
+LoadModule dir_module libexec/apache2/mod_dir.so
+LoadModule imagemap_module libexec/apache2/mod_imagemap.so
+LoadModule actions_module libexec/apache2/mod_actions.so
+LoadModule speling_module libexec/apache2/mod_speling.so
+LoadModule userdir_module libexec/apache2/mod_userdir.so
+LoadModule alias_module libexec/apache2/mod_alias.so
+LoadModule rewrite_module libexec/apache2/mod_rewrite.so
+LoadModule php5_module libexec/apache2/libphp5.so
+LoadModule hfs_apple_module libexec/apache2/mod_hfs_apple.so
 
-<IfModule !mpm_netware_module>
-<IfModule !mpm_winnt_module>
+<IfModule unixd_module>
 #
 # If you wish httpd to run as a different user or group, you must run
 # httpd as root initially and it will switch.
@@ -136,10 +212,9 @@ LoadModule rewrite_module libexec/mod_rewrite.so
 # It is usually good practice to create a dedicated user and group for
 # running httpd, as with most system services.
 #
-User daemon
-Group daemon
+User _www
+Group _www
 
-</IfModule>
 </IfModule>
 
 # 'Main' server configuration
@@ -168,28 +243,16 @@ ServerAdmin you@example.com
 #
 # If your host doesn't have a registered DNS name, enter its IP address here.
 #
-ServerName www.example.com:8080
+ServerName www.example.com:80
 
 #
-# DocumentRoot: The directory out of which you will serve your
-# documents. By default, all requests are taken from this directory, but
-# symbolic links and aliases may be used to point to other locations.
-#
-DocumentRoot "/usr/local/var/www/htdocs"
-
-#
-# Each directory to which Apache has access can be configured with respect
-# to which services and features are allowed and/or disabled in that
-# directory (and its subdirectories).
-#
-# First, we configure the "default" to be a very restrictive set of
-# features.
+# Deny access to the entirety of your server's filesystem. You must
+# explicitly permit access to web content directories in other
+# <Directory> blocks below.
 #
 <Directory />
-    Options FollowSymLinks
-    AllowOverride None
-    Order deny,allow
-    Deny from all
+    AllowOverride none
+    Require all denied
 </Directory>
 
 #
@@ -200,9 +263,12 @@ DocumentRoot "/usr/local/var/www/htdocs"
 #
 
 #
-# This should be changed to whatever you set DocumentRoot to.
+# DocumentRoot: The directory out of which you will serve your
+# documents. By default, all requests are taken from this directory, but
+# symbolic links and aliases may be used to point to other locations.
 #
-<Directory "/usr/local/var/www/htdocs">
+DocumentRoot "/Library/WebServer/Documents"
+<Directory "/Library/WebServer/Documents">
     #
     # Possible values for the Options directive are "None", "All",
     # or any combination of:
@@ -212,24 +278,23 @@ DocumentRoot "/usr/local/var/www/htdocs"
     # doesn't give it to you.
     #
     # The Options directive is both complicated and important.  Please see
-    # http://httpd.apache.org/docs/2.2/mod/core.html#options
+    # http://httpd.apache.org/docs/2.4/mod/core.html#options
     # for more information.
     #
-    Options Indexes FollowSymLinks
+    Options FollowSymLinks Multiviews
+    MultiviewsMatch Any
 
     #
     # AllowOverride controls what directives may be placed in .htaccess files.
     # It can be "All", "None", or any combination of the keywords:
-    #   Options FileInfo AuthConfig Limit
+    #   AllowOverride FileInfo AuthConfig Limit
     #
     AllowOverride None
 
     #
     # Controls who can get stuff from this server.
     #
-    Order allow,deny
-    Allow from all
-
+    Require all granted
 </Directory>
 
 #
@@ -244,11 +309,19 @@ DocumentRoot "/usr/local/var/www/htdocs"
 # The following lines prevent .htaccess and .htpasswd files from being
 # viewed by Web clients.
 #
-<FilesMatch "^\.ht">
-    Order allow,deny
-    Deny from all
-    Satisfy All
+<FilesMatch "^\.([Hh][Tt]|[Dd][Ss]_[Ss])">
+    Require all denied
 </FilesMatch>
+
+#
+# Apple specific filesystem protection.
+#
+<Files "rsrc">
+    Require all denied
+</Files>
+<DirectoryMatch ".*\.\.namedfork">
+    Require all denied
+</DirectoryMatch>
 
 #
 # ErrorLog: The location of the error log file.
@@ -257,7 +330,7 @@ DocumentRoot "/usr/local/var/www/htdocs"
 # logged here.  If you *do* define an error logfile for a <VirtualHost>
 # container, that host's errors will be logged there and not here.
 #
-ErrorLog "/usr/local/var/log/apache2/error_log"
+ErrorLog "/private/var/log/apache2/error_log"
 
 #
 # LogLevel: Control the number of messages logged to the error_log.
@@ -286,13 +359,13 @@ LogLevel warn
     # define per-<VirtualHost> access logfiles, transactions will be
     # logged therein and *not* in this file.
     #
-    CustomLog "/usr/local/var/log/apache2/access_log" common
+    CustomLog "/private/var/log/apache2/access_log" common
 
     #
     # If you prefer a logfile with access, agent, and referer information
     # (Combined Logfile Format) you can use the following directive.
     #
-    #CustomLog "/usr/local/var/log/apache2/access_log" combined
+    #CustomLog "/private/var/log/apache2/access_log" combined
 </IfModule>
 
 <IfModule alias_module>
@@ -301,13 +374,13 @@ LogLevel warn
     # exist in your server's namespace, but do not anymore. The client
     # will make a new request for the document at its new location.
     # Example:
-    Redirect permanent /foo http://www.example.com/bar
+    # Redirect permanent /foo http://www.example.com/bar
 
     #
     # Alias: Maps web paths into filesystem paths and is used to
     # access content that does not live under the DocumentRoot.
     # Example:
-    Alias /webpath /full/filesystem/path
+    # Alias /webpath /full/filesystem/path
     #
     # If you include a trailing / on /webpath then the server will
     # require it to be present in the URL.  You will also likely
@@ -322,7 +395,7 @@ LogLevel warn
     # client.  The same rules about trailing "/" apply to ScriptAlias
     # directives as to Alias.
     #
-    ScriptAlias /cgi-bin/ "/usr/local/var/apache2/cgi-bin/"
+    ScriptAliasMatch ^/cgi-bin/((?!(?i:webobjects)).*$) "/Library/WebServer/CGI-Executables/$1"
 
 </IfModule>
 
@@ -331,49 +404,37 @@ LogLevel warn
     # ScriptSock: On threaded servers, designate the path to the UNIX
     # socket used to communicate with the CGI daemon of mod_cgid.
     #
-    Scriptsock /usr/local/var/run/apache2/cgisock
+    #Scriptsock cgisock
 </IfModule>
 
 #
-# "/usr/local/var/apache2/cgi-bin" should be changed to whatever your ScriptAliased
+# "/Library/WebServer/CGI-Executables" should be changed to whatever your ScriptAliased
 # CGI directory exists, if you have that configured.
 #
-<Directory "/usr/local/var/apache2/cgi-bin">
+<Directory "/Library/WebServer/CGI-Executables">
     AllowOverride None
     Options None
-    Order allow,deny
-    Allow from all
+    Require all granted
 </Directory>
-
-#
-# DefaultType: the default MIME type the server will use for a document
-# if it cannot otherwise determine one, such as from filename extensions.
-# If your server contains mostly text or HTML documents, "text/plain" is
-# a good value.  If most of your content is binary, such as applications
-# or images, you may want to use "application/octet-stream" instead to
-# keep browsers from trying to display binary files as though they are
-# text.
-#
-DefaultType text/plain
 
 <IfModule mime_module>
     #
     # TypesConfig points to the file containing the list of mappings from
     # filename extension to MIME-type.
     #
-    TypesConfig /usr/local/etc/apache2/2.2/mime.types
+    TypesConfig /private/etc/apache2/mime.types
 
     #
     # AddType allows you to add to or override the MIME configuration
     # file specified in TypesConfig for specific file types.
     #
-    AddType application/x-gzip .tgz
+    #AddType application/x-gzip .tgz
     #
     # AddEncoding allows you to have certain browsers uncompress
     # information on the fly. Note: Not all browsers support this.
     #
-    AddEncoding x-compress .Z
-    AddEncoding x-gzip .gz .tgz
+    #AddEncoding x-compress .Z
+    #AddEncoding x-gzip .gz .tgz
     #
     # If the AddEncoding directives above are commented-out, then you
     # probably should define those extensions to indicate media types:
@@ -389,10 +450,10 @@ DefaultType text/plain
     # To use CGI scripts outside of ScriptAliased directories:
     # (You will also need to add "ExecCGI" to the "Options" directive.)
     #
-    AddHandler cgi-script .cgi
+    #AddHandler cgi-script .cgi
 
     # For type maps (negotiated resources):
-    AddHandler type-map var
+    #AddHandler type-map var
 
     #
     # Filters allow you to process content before it is sent to the client.
@@ -400,8 +461,8 @@ DefaultType text/plain
     # To parse .shtml files for server-side includes (SSI):
     # (You will also need to add "Includes" to the "Options" directive.)
     #
-    AddType text/html .shtml
-    AddOutputFilter INCLUDES .shtml
+    #AddType text/html .shtml
+    #AddOutputFilter INCLUDES .shtml
 </IfModule>
 
 #
@@ -409,7 +470,7 @@ DefaultType text/plain
 # contents of the file itself to determine its type.  The MIMEMagicFile
 # directive tells the module where the hint definitions are located.
 #
-MIMEMagicFile /usr/local/etc/apache2/2.2/magic
+#MIMEMagicFile /private/etc/apache2/magic
 
 #
 # Customizable error responses come in three flavors:
@@ -431,54 +492,62 @@ MaxRanges unlimited
 
 #
 # EnableMMAP and EnableSendfile: On systems that support it,
-# memory-mapping or the sendfile syscall is used to deliver
+# memory-mapping or the sendfile syscall may be used to deliver
 # files.  This usually improves server performance, but must
 # be turned off when serving from networked-mounted
 # filesystems or if support for these functions is otherwise
 # broken on your system.
+# Defaults: EnableMMAP On, EnableSendfile Off
 #
 EnableMMAP off
-EnableSendfile off
+EnableSendfile on
+
+TraceEnable off
 
 # Supplemental configuration
 #
-# The configuration files in the /usr/local/etc/apache2/2.2/extra/ directory can be
+# The configuration files in the /private/etc/apache2/extra/ directory can be
 # included to add extra features or to modify the default configuration of
 # the server, or you may simply copy their contents here and change as
 # necessary.
 
 # Server-pool management (MPM specific)
-Include /usr/local/etc/apache2/2.2/extra/httpd-mpm.conf
+Include /private/etc/apache2/extra/httpd-mpm.conf
 
 # Multi-language error messages
-Include /usr/local/etc/apache2/2.2/extra/httpd-multilang-errordoc.conf
+Include /private/etc/apache2/extra/httpd-multilang-errordoc.conf
 
 # Fancy directory listings
-Include /usr/local/etc/apache2/2.2/extra/httpd-autoindex.conf
+Include /private/etc/apache2/extra/httpd-autoindex.conf
 
 # Language settings
-Include /usr/local/etc/apache2/2.2/extra/httpd-languages.conf
+Include /private/etc/apache2/extra/httpd-languages.conf
 
 # User home directories
-Include /usr/local/etc/apache2/2.2/extra/httpd-userdir.conf
+Include /private/etc/apache2/extra/httpd-userdir.conf
 
 # Real-time info on requests and configuration
-Include /usr/local/etc/apache2/2.2/extra/httpd-info.conf
+Include /private/etc/apache2/extra/httpd-info.conf
 
 # Virtual hosts
-Include /usr/local/etc/apache2/2.2/extra/httpd-vhosts.conf
+Include /private/etc/apache2/extra/httpd-vhosts.conf
 
 # Local access to the Apache HTTP Server Manual
-Include /usr/local/etc/apache2/2.2/extra/httpd-manual.conf
+Include /private/etc/apache2/extra/httpd-manual.conf
 
 # Distributed authoring and versioning (WebDAV)
-Include /usr/local/etc/apache2/2.2/extra/httpd-dav.conf
+Include /private/etc/apache2/extra/httpd-dav.conf
 
 # Various default settings
-Include /usr/local/etc/apache2/2.2/extra/httpd-default.conf
+Include /private/etc/apache2/extra/httpd-default.conf
+
+# Configure mod_proxy_html to understand HTML4/XHTML1
+<IfModule proxy_html_module>
+Include /private/etc/apache2/extra/proxy-html.conf
+</IfModule>
 
 # Secure (SSL/TLS) connections
-#Include /usr/local/etc/apache2/2.2/extra/httpd-ssl.conf
+#Include /private/etc/apache2/extra/httpd-ssl.conf
 #
 # Note: The following must must be present to support
 #       starting without SSL on platforms with no /dev/random equivalent
@@ -489,136 +558,29 @@ SSLRandomSeed startup builtin
 SSLRandomSeed connect builtin
 </IfModule>
 
-# Vitor Britto - Changes
+Include /private/etc/apache2/other/*.conf
 
-# Load PHP-FPM via mod_fastcgi
-LoadModule fastcgi_module    /usr/local/opt/mod_fastcgi/libexec/mod_fastcgi.so
-
-<IfModule fastcgi_module>
-  FastCgiConfig -maxClassProcesses 1 -idle-timeout 1500
-
-  # Prevent accessing FastCGI alias paths directly
-  <LocationMatch "^/fastcgi">
-    Order Deny,Allow
-    Deny from All
-    Allow from env=REDIRECT_STATUS
-  </LocationMatch>
-
-  FastCgiExternalServer /php-fpm -host 127.0.0.1:9000 -pass-header Authorization -idle-timeout 1500
-  ScriptAlias /fastcgiphp /php-fpm
-  Action php-fastcgi /fastcgiphp
-
-  # Send PHP extensions to PHP-FPM
-  AddHandler php-fastcgi .php
-
-  # PHP options
-  AddType text/html .php
-  DirectoryIndex index.php index.html
+#
+# uncomment out the below to deal with user agents that deliberately
+# violate open standards by misusing DNT (DNT *must* be a specific
+# end-user choice)
+#
+<IfModule setenvif_module>
+BrowserMatch "MSIE 10.0;" bad_DNT
 </IfModule>
-
-# Include our VirtualHosts
-Include /Users/david.paterson/Sites/httpd-vhosts.conf
-
-# Vitor Britto - Changes
-
-# Load PHP-FPM via mod_fastcgi
-LoadModule fastcgi_module    /usr/local/opt/mod_fastcgi/libexec/mod_fastcgi.so
-
-<IfModule fastcgi_module>
-  FastCgiConfig -maxClassProcesses 1 -idle-timeout 1500
-
-  # Prevent accessing FastCGI alias paths directly
-  <LocationMatch "^/fastcgi">
-    Order Deny,Allow
-    Deny from All
-    Allow from env=REDIRECT_STATUS
-  </LocationMatch>
-
-  FastCgiExternalServer /php-fpm -host 127.0.0.1:9000 -pass-header Authorization -idle-timeout 1500
-  ScriptAlias /fastcgiphp /php-fpm
-  Action php-fastcgi /fastcgiphp
-
-  # Send PHP extensions to PHP-FPM
-  AddHandler php-fastcgi .php
-
-  # PHP options
-  AddType text/html .php
-  DirectoryIndex index.php index.html
+<IfModule headers_module>
+RequestHeader unset DNT env=bad_DNT
 </IfModule>
+    APACHE_CONFIG
 
-# Include our VirtualHosts
-Include /Users/david/Sites/httpd-vhosts.conf
+    result = ApacheConfigParser.parse(complete_apache_config)
 
-Include /Users/david/Sites\
-/very-long-path
-
-    APACHE_CONFIG_NATIVE
-
-    @ast = <<-APACHE_CONFIG_AST
-<Apache-Config>
-<Comment indent='0'># ************************************</Comment>
-<Comment indent='0'># Vhost template in module puppetlabs-apache</Comment>
-<Comment indent='0'># Managed by Puppet</Comment>
-<Comment indent='0'># ************************************</Comment>
-<Comment indent='0'/>
-<VirtualHost indent='0' parameters='*:443'>
-<Entry indent='2' name='ServerName'><![CDATA[dev.test.org.uk]]></Entry>
-<Comment indent='0'/>
-<Comment indent='2'>## Vhost docroot</Comment>
-<Entry indent='2' name='DocumentRoot'><![CDATA["/opt/public"]]></Entry>
-<Comment indent='0'/>
-<Comment indent='2'>## Directories, there should at least be a declaration for /opt/public</Comment>
-<Comment indent='0'/>
-<Directory indent='2' parameters='&quot;/opt/public&quot;'>
-<Entry indent='4' name='Options'><![CDATA[FollowSymLinks]]></Entry>
-<Entry indent='4' name='AllowOverride'><![CDATA[None]]></Entry>
-<Entry indent='4' name='Require'><![CDATA[all granted]]></Entry>
-<Entry indent='4' name='DirectoryIndex'><![CDATA[index.php]]></Entry>
-<Entry indent='4' name='ExpiresActive'><![CDATA[On]]></Entry>
-<Entry indent='4' name='ExpiresDefault'><![CDATA["access plus 5 minutes"]]></Entry>
-</Directory><Comment indent='0'/>
-<Comment indent='2'>## Logging</Comment>
-<Entry indent='2' name='ErrorLog'><![CDATA["/var/log/httpd/test.org.uk_ssl_error_ssl.log"]]></Entry>
-<Entry indent='2' name='ServerSignature'><![CDATA[Off]]></Entry>
-<Entry indent='2' name='CustomLog'><![CDATA["/var/log/httpd/test.org.uk_ssl_access_ssl.log" "%a %l %u %t "%r" %&gt;s %b "%{Referer}i" %D"]]></Entry>
-<Comment indent='2'>## Rewrite rules</Comment>
-<Entry indent='2' name='RewriteEngine'><![CDATA[On]]></Entry>
-<Comment indent='0'/>
-<Entry indent='2' name='RewriteCond'><![CDATA[%{DOCUMENT_ROOT}%{REQUEST_URI} !-s]]></Entry>
-<Entry indent='2' name='RewriteCond'><![CDATA[%{DOCUMENT_ROOT}%{REQUEST_URI} !-l]]></Entry>
-<Entry indent='2' name='RewriteCond'><![CDATA[%{DOCUMENT_ROOT}%{REQUEST_URI} !-d]]></Entry>
-<Entry indent='2' name='RewriteRule'><![CDATA[^(.*)$ %{DOCUMENT_ROOT}/index.php [NC,L]]]></Entry>
-<Comment indent='0'/>
-<Entry indent='2' name='RewriteRule'><![CDATA[.* - [E=HTTP_Authorization:%{HTTP:Authorization}]]]></Entry>
-<Comment indent='0'/>
-<Comment indent='0'/>
-<Comment indent='2'>## SetEnv/SetEnvIf for environment variables</Comment>
-<Entry indent='2' name='SetEnv'><![CDATA[APPLICATION_ENV development]]></Entry>
-<Entry indent='2' name='SetEnv'><![CDATA[APPLICATION_CONFIG_PATH /etc/configurtion]]></Entry>
-<Entry indent='2' name='SetEnvIf'><![CDATA[X-Nginx-Scheme "^https$" HTTPS=on]]></Entry>
-<Comment indent='0'/>
-<Comment indent='2'>## SSL directives</Comment>
-<Entry indent='2' name='SSLEngine'><![CDATA[on]]></Entry>
-<Entry indent='2' name='SSLCertificateFile'><![CDATA[     "/etc/pki/tls/certs/test.org.uk.crt"]]></Entry>
-<Entry indent='2' name='SSLCertificateKeyFile'><![CDATA[  "/etc/pki/tls/certs/test.org.uk.key"]]></Entry>
-<Entry indent='2' name='SSLCACertificatePath'><![CDATA[   "/etc/pki/tls/certs"]]></Entry>
-</VirtualHost></Apache-Config>
-    APACHE_CONFIG_AST
+    assert_not_nil result
 
   end
 
-  def teardown
-    # Do nothing
-  end
 
-  # Basic parse
-  def test_basic_parse
 
-    ast = ApacheConfigParser.parse(@native_apache_config)
-
-    result = ast
-
-  end
 
 
 end
