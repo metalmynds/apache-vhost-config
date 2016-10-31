@@ -17,10 +17,7 @@ class ParserTests < Test::Unit::TestCase
   # Basic Wrapped Entry Line
   def test_wrapped_line_parse
 
-    multiple_line_config  = <<-APACHE_CONFIG
-Include /Users/david/Sites\\
-/very-long-path
-    APACHE_CONFIG
+    multiple_line_config  = File.open(File.join(File.dirname(__FILE__), '../testData/split_line.conf'), File::RDONLY).read
 
     result = ApacheConfigParser.parse(multiple_line_config)
 
@@ -571,16 +568,12 @@ BrowserMatch "MSIE 10.0;" bad_DNT
 <IfModule headers_module>
 RequestHeader unset DNT env=bad_DNT
 </IfModule>
-    APACHE_CONFIG
+APACHE_CONFIG
 
     result = ApacheConfigParser.parse(complete_apache_config)
 
     assert_not_nil result
 
   end
-
-
-
-
 
 end

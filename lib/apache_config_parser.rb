@@ -59,17 +59,17 @@ module ApacheConfigParser
 
           if key_pair[:value].end_with?('\\')
 
-            tokens << "<Token type='entry' indent='#{size}' name='#{key_pair[:name]}'><Token type='value'><![CDATA[#{key_pair[:value].to_s[0..-1]}></Token>"
+            tokens << "<Token type='entry' indent='#{size}' name='#{key_pair[:name]}'><Token type='value'><![CDATA[#{key_pair[:value].to_s[0..-2]}]]></Token>"
 
             line_enumerator.peek_values.each do |peeked_line|
 
               if peeked_line.end_with?('\\')
 
-                tokens << "<Token type='value'>#{line_enumerator.next}[0..-1]</Token>"
+                tokens << "<Token type='value'><![CDATA[#{line_enumerator.next[0..-2]}]]></Token>"
 
               else
 
-                tokens << "<Token type='value'>#{line_enumerator.next}]]></Token></Token>\n"
+                tokens << "<Token type='value'><![CDATA[#{line_enumerator.next[0..-2]}]]></Token></Token>"
 
                 break
 
@@ -115,29 +115,35 @@ module ApacheConfigParser
 
       when 'comment'
 
-        parent.entries.push(ApacheConfigEntry.new(token.attributes[:indent], type, '', token.nodes[0].value))
-
-      when 'entry'
-
-        entry = parent.entries.push(ApacheConfigEntry.new(token.attributes[:indent], type, token.attributes[:name], token.nodes[0].value))
+        entry  = ApacheConfigEntry.new(token.attributes[:indent], type, '')
 
         parent.entries.push(entry)
 
-        token.nodes.each do |line_token|
+        entry.values.push(token.nodes[0].value)
 
-          process(entry, line_token)
+      when 'entry'
+
+        entry = ApacheConfigEntry.new(token.attributes[:indent], type, token.attributes[:name])
+
+        parent.entries.push(entry)
+
+        #entry.values.push(token.nodes[0].value)
+
+        token.nodes.each do |child_token|
+
+          process(entry, child_token)
 
         end
 
-
       when 'value'
 
-
-
+        parent.values.push(token.nodes[0].value)
 
       when 'section'
 
-        section = parent.entries.push(ApacheConfigSection.new(token.attributes[:parameters]))
+        section = ApacheConfigSection.new(token.attributes[:name], token.attributes[:parameters])
+
+        parent.entries.push(section)
 
         token.nodes.each do |child_token|
 
